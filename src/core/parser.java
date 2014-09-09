@@ -12,30 +12,48 @@ import utility.Pair;
 
 public class Parser {
 
+  private enum spaceState {
+    zero, first, second;
+    public static void next(spaceState ss){
+      switch(ss){
+        case zero:{
+          ss=spaceState.first;
+        }
+        case first:{
+          ss=spaceState.second;
+        }
+        case second:{
+          ss=spaceState.zero;
+        }
+      }
+    }
+  }
+
   private Map<String, Object> confResult;
   private String fileName = "Tetris.conf";
   char[] chars = new char[1024];
   int index = 0;
   private int currentMap;
-  List<Map<String,Object>> maps=new ArrayList<Map<String,Object>>();
-  
-  public Parser(){
-    confResult=new HashMap<String,Object>();
+  List<Map<String, Object>> maps = new ArrayList<Map<String, Object>>();
+
+  public Parser() {
+    confResult = new HashMap<String, Object>();
     maps.add(confResult);
   }
+
   public Map<String, Object> parseConfig() throws IOException {
     FileReader fr = new FileReader(fileName);
-    currentMap=0;
+    currentMap = 0;
     while (true) {
       Pair<String, Object> resultPair = parseLine(fr);
       if (resultPair.getKey() != null) {
-        if(resultPair.getValue() instanceof NullObject){
-          maps.add(new HashMap<String,Object>());
-          maps.get(currentMap).put(resultPair.getKey(), maps.get(currentMap+1));
+        if (resultPair.getValue() instanceof NullObject) {
+          maps.add(new HashMap<String, Object>());
+          maps.get(currentMap).put(resultPair.getKey(),
+              maps.get(currentMap + 1));
           currentMap++;
-        }
-        else{
-          maps.get(currentMap).put(resultPair.getKey(),resultPair.getValue());
+        } else {
+          maps.get(currentMap).put(resultPair.getKey(), resultPair.getValue());
         }
       } else {
         break;
@@ -55,15 +73,16 @@ public class Parser {
 
   public Pair<String, Object> parseLine(FileReader fr) throws IOException {
     int r;
-    boolean firstChar=true;
+    spaceState ss=spaceState.zero;
+    Boolean spaceFirst=true;
     String key = null;
     Object value = null;
     this.index = 0;
     while ((r = fr.read()) != -1) {
       if (r == '\r') {
-        if(this.index==0){
-          value=new NullObject();
-        }else{
+        if (this.index == 0) {
+          value = new NullObject();
+        } else {
           value = packString();
         }
         break;
@@ -72,15 +91,14 @@ public class Parser {
           key = packString();
         } else {
           if (r == ' ') {
-            if(firstChar){
+            spaceState.next(ss);
+            if(ss==spaceState.second&&spaceFirst){
               currentMap--;
             }
-            firstChar=false;
             continue;
-          }
-          else{
-            firstChar=false;
-            chars[index++]=(char)r;
+          } else {
+            spaceFirst=false;
+            chars[index++] = (char) r;
           }
         }
       }
