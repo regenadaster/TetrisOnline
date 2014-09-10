@@ -97,8 +97,12 @@ public class Parser {
             }
             continue;
           } else {
-            spaceFirst=false;
-            chars[index++] = (char) r;
+            if(r=='\n'){
+              continue;
+            }else{
+              spaceFirst=false;
+              chars[index++] = (char) r;
+            }
           }
         }
       }
